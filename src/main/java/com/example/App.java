@@ -3,7 +3,7 @@ package com.example;
 public class App {
 
     public static String greeting() {
-        return "Hello World from Maven and Jenkins!";
+        return "Hello from the feature branch!";
     }
 
     public static void main(String[] args) {
