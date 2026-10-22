@@ -1,0 +1,53 @@
+name: Maven Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build Release Artifact
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Verify project
+        run: mvn --batch-mode clean verify
+
+      - name: Generate SHA-256 checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd target
+          shopt -s nullglob
+          jars=( *.jar )
+          if (( ${#jars[@]} == 0 )); then
+            echo "No JAR artifact found" >&2
+            exit 1
+          fi
+          sha256sum "${jars[@]}" > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.ref_name }}
+          path: |
+            target/*.jar
+            target/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 30
